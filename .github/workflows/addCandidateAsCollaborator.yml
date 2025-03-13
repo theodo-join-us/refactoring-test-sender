@@ -1,0 +1,32 @@
+name: Add candidate as collaborator
+
+on:
+  workflow_call:
+    inputs:
+      candidate_name:
+        type: string
+        description: "Candidate name"
+        required: true
+      candidate_github:
+        type: string
+        description: "Candidate username (Github)"
+        required: true
+
+jobs:
+  add_collaborator:
+    name: Add collaborator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Define CUSTOM_REPO_NAME env variable
+        run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-js-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
+
+      - name: Add candidate as collaborator
+        env:
+          ORG_NAME: "theodo-join-us"
+        run: |
+          CANDIDATE_GITHUB="${{ inputs.candidate_github }}"
+
+          curl -f -X PUT -H "Authorization: token ${{ secrets.JOIN_US_FORK_INVIT_SECRET }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$ORG_NAME/$CUSTOM_REPO_NAME/collaborators/$CANDIDATE_GITHUB \
+               -d '{"permission": "write"}'

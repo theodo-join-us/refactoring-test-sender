@@ -1,0 +1,101 @@
+name: Send Refactoring Test
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  parse-issue:
+    runs-on: ubuntu-latest
+    outputs:
+      is_issue_refactoring_request: ${{ steps.check_labels.outputs.result }}
+      candidate_name: ${{ steps.get_candidate_name.outputs.result }}
+      candidate_github: ${{ steps.get_github_pseudo.outputs.result }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check labels
+        id: check_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(label => label.name);
+            return labels.includes('send-test-request');
+
+      - name: Get Candidate Name
+        id: get_candidate_name
+        if: steps.check_labels.outputs.result == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            const parts = title.split("__");
+            if (parts.length === 2) {
+              const fullName = parts[0];
+              const parsedName = fullName.replaceAll(' ', '-').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              return parsedName;
+            } else {
+              throw new Error('Issue title does not match the expected format');
+            }
+
+      - name: Get Github Pseudo
+        id: get_github_pseudo
+        if: steps.check_labels.outputs.result == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            const parts = title.split("__");
+            if (parts.length === 2) {
+              return parts[1];
+            } else {
+              throw new Error('Issue title does not match the expected format');
+            }
+
+  create-repository:
+    needs: parse-issue
+    if: needs.parse-issue.outputs.is_issue_refactoring_request == 'true'
+    uses: ./.github/workflows/createRepository.yml
+    with:
+      candidate_name: ${{ needs.parse-issue.outputs.candidate_name }}
+    secrets: inherit
+
+  add-collaborator:
+    needs: [create-repository, parse-issue]
+    if: ${{ success() }}
+    uses: ./.github/workflows/addCandidateAsCollaborator.yml
+    with:
+      candidate_name: ${{ needs.parse-issue.outputs.candidate_name }}
+      candidate_github: ${{ needs.parse-issue.outputs.candidate_github }}
+    secrets: inherit
+
+  handle-failure:
+    needs: [create-repository, add-collaborator]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Handle workflow failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Workflow failure"
+          gh issue edit ${{ github.event.issue.number }} --add-label "error"
+          exit 0
+
+  handle-success:
+    needs: [create-repository, add-collaborator]
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Handle workflow success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Workflow successful"
+          gh issue edit ${{ github.event.issue.number }} --add-label "success"
+          exit 0
