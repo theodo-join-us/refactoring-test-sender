@@ -11,6 +11,10 @@ on:
         type: string
         description: "Candidate username (Github)"
         required: true
+      test_type:
+        type: string
+        description: "Type of test (js, py, java)"
+        required: true
 
 jobs:
   add_collaborator:
@@ -18,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Define CUSTOM_REPO_NAME env variable
-        run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-js-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
+        run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-${{inputs.test_type}}-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
 
       - name: Add candidate as collaborator
         env:

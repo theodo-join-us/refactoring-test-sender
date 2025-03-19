@@ -7,13 +7,16 @@ on:
         type: string
         description: "Candidate name"
         required: true
+      test_type:
+        type: string
+        description: "Type of test (js, py, java)"
+        required: true
 
 jobs:
   create_repo:
     runs-on: ubuntu-latest
     env:
       ORG_NAME: "theodo-group"
-      TEMPLATE_REPO: "hokla-aphp-js"
       USER_EMAIL: "joinus@theodo.fr"
       USER_NAME: "theodo-join-us"
     steps:
@@ -22,8 +25,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Define TEMPLATE_REPO env variable
+        run: echo "TEMPLATE_REPO=hokla-aphp-${{ inputs.test_type }}" | sed 's/\"//g' >> $GITHUB_ENV
+
       - name: Define CUSTOM_REPO_NAME env variable
-        run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-js-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
+        run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-${{ inputs.test_type }}-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
 
       - name: Create a custom repository
         run: |

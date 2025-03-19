@@ -11,6 +11,7 @@ jobs:
       is_issue_refactoring_request: ${{ steps.check_labels.outputs.result }}
       candidate_name: ${{ steps.get_candidate_name.outputs.result }}
       candidate_github: ${{ steps.get_github_pseudo.outputs.result }}
+      test_type: ${{ steps.parse_test_type.outputs.result }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -22,6 +23,17 @@ jobs:
           script: |
             const labels = context.payload.issue.labels.map(label => label.name);
             return labels.includes('send-test-request');
+
+      - name: Parse test type
+        id: parse_test_type
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(label => label.name);
+            if (labels.includes('python')) return "py"
+            if (labels.includes('javascript')) return "js"
+            if (labels.includes('java')) return "java"
+            throw new Error('No valid test type found.')
 
       - name: Get Candidate Name
         id: get_candidate_name
@@ -59,6 +71,7 @@ jobs:
     uses: ./.github/workflows/createRepository.yml
     with:
       candidate_name: ${{ needs.parse-issue.outputs.candidate_name }}
+      test_type: ${{ needs.parse-issue.outputs.test_type }}
     secrets: inherit
 
   add-collaborator:
@@ -68,6 +81,7 @@ jobs:
     with:
       candidate_name: ${{ needs.parse-issue.outputs.candidate_name }}
       candidate_github: ${{ needs.parse-issue.outputs.candidate_github }}
+      test_type: ${{ needs.parse-issue.outputs.test_type }}
     secrets: inherit
 
   handle-failure:
