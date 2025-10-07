@@ -5,20 +5,20 @@ on:
     inputs:
       candidate_name:
         type: string
-        description: "Candidate name"
+        description: 'Candidate name'
         required: true
       test_type:
         type: string
-        description: "Type of test (js, py, java, swift)"
+        description: 'Type of test (js, py, java, swift, kotlin)'
         required: true
 
 jobs:
   create_repo:
     runs-on: ubuntu-latest
     env:
-      ORG_NAME: "theodo-group"
-      USER_EMAIL: "joinus@theodo.fr"
-      USER_NAME: "theodo-join-us"
+      ORG_NAME: 'theodo-group'
+      USER_EMAIL: 'joinus@theodo.fr'
+      USER_NAME: 'theodo-join-us'
     steps:
       - name: checkout
         uses: actions/checkout@v4
