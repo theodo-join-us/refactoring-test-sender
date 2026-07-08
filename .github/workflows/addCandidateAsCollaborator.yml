@@ -20,13 +20,13 @@ jobs:
   add_collaborator:
     name: Add collaborator
     runs-on: ubuntu-latest
+    env:
+      ORG_NAME: "theodo-join-us"
     steps:
       - name: Define CUSTOM_REPO_NAME env variable
         run: echo "CUSTOM_REPO_NAME=test-hokla-aphp-${{inputs.test_type}}-${{ inputs.candidate_name }}" | sed 's/\"//g' >> $GITHUB_ENV
 
       - name: Add candidate as collaborator
-        env:
-          ORG_NAME: "theodo-join-us"
         run: |
           CANDIDATE_GITHUB="${{ inputs.candidate_github }}"
 
@@ -34,3 +34,12 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/repos/$ORG_NAME/$CUSTOM_REPO_NAME/collaborators/$CANDIDATE_GITHUB \
                -d '{"permission": "write"}'
+
+      - name: Cleanup repository if invite failed
+        if: failure()
+        run: |
+          echo "Invite failed, deleting $ORG_NAME/$CUSTOM_REPO_NAME so the next attempt can recreate it"
+          curl -s -o /dev/null -w "%{http_code}\n" -X DELETE \
+               -H "Authorization: token ${{ secrets.JOIN_US_FORK_INVIT_SECRET }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$ORG_NAME/$CUSTOM_REPO_NAME
