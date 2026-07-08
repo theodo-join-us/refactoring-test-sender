@@ -47,7 +47,13 @@ jobs:
             const parts = title.split("__");
             if (parts.length === 2) {
               const fullName = parts[0];
-              const parsedName = fullName.replaceAll(' ', '-').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              const parsedName = fullName
+                .replaceAll(' ', '-')
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[\u2010-\u2015\u2212]/g, "-")
+                .replace(/[^a-z0-9-]/g, "");
               return parsedName;
             } else {
               throw new Error('Issue title does not match the expected format');
