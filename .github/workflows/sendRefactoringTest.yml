@@ -35,6 +35,7 @@ jobs:
             if (labels.includes('java')) return "java"
             if (labels.includes('swift')) return "swift"
             if (labels.includes('kotlin')) return "kotlin"
+            if (labels.includes('typescript')) return "ts"
             throw new Error('No valid test type found.')
 
       - name: Get Candidate Name
