@@ -9,7 +9,7 @@ on:
         required: true
       test_type:
         type: string
-        description: 'Type of test (js, py, java, swift, kotlin)'
+        description: 'Type of test (js, py, java, swift, kotlin, ts)'
         required: true
 
 jobs:
